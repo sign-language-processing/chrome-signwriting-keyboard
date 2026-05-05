@@ -1,0 +1,22 @@
+{
+  "name": "chrome-signwriting-keyboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Chrome extension that opens a SignMaker keyboard for inputs marked as SignWriting fields.",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "node --test test/unit/*.test.js",
+    "test:e2e": "node --test --test-timeout=120000 test/e2e/*.test.js",
+    "test:all": "npm run test && npm run test:e2e",
+    "build": "node scripts/build.js",
+    "icons": "node scripts/make-icons.js",
+    "serve:test": "node scripts/serve-test-page.js"
+  },
+  "devDependencies": {
+    "eslint": "^9.17.0",
+    "globals": "^15.14.0",
+    "puppeteer": "^24.42.0"
+  }
+}
