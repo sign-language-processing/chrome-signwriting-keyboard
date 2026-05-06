@@ -5,7 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { startStaticServer } from "../helpers/server.js";
-import { launchBrowser, interceptSignMaker, EXTENSION_PATH } from "../helpers/browser.js";
+import { launchBrowser, interceptSignMaker, blockSignMaker, settle, EXTENSION_PATH } from "../helpers/browser.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SCREENSHOT_DIR = resolve(__dirname, "..", "..", "e2e-output");
@@ -82,12 +82,6 @@ test("opens modal when SignWriting input is focused", async () => {
   await page.screenshot({ path: join(SCREENSHOT_DIR, "02-modal-open.png"), fullPage: true });
   await page.close();
 });
-
-async function settle(page) {
-  await page.evaluate(() =>
-    new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
-  );
-}
 
 test("does not open modal for non-matching inputs", async () => {
   const page = await newPage();
@@ -240,6 +234,7 @@ test("input becomes enhanced when an attribute is mutated to SignWriting", async
 
 test("prefilled input value is forwarded to SignMaker via the swu URL param", async () => {
   const page = await newPage();
+  await blockSignMaker(page);
   await gotoTestPage(page);
 
   await page.focus("#prefilled");
@@ -247,8 +242,7 @@ test("prefilled input value is forwarded to SignMaker via the swu URL param", as
 
   const iframeSrc = await page.$eval(".swkb-iframe", (el) => el.src);
   const expectedValue = await page.$eval("#prefilled", (el) => el.value);
-  const url = new URL(iframeSrc);
-  const params = new URLSearchParams(url.hash.replace(/^#\??/, ""));
+  const params = new URLSearchParams(new URL(iframeSrc).hash.replace(/^#\??/, ""));
   assert.equal(params.get("swu"), expectedValue);
 
   await page.close();

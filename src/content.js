@@ -10,7 +10,6 @@
   let modalEl = null;
   let activeInput = null;
 
-
   function isTextInput(el) {
     if (!(el instanceof HTMLInputElement)) return false;
     const type = (el.getAttribute("type") || "text").toLowerCase();
@@ -48,7 +47,7 @@
           <span class="swkb-modal-title">SignWriting Keyboard</span>
           <button type="button" class="swkb-close" aria-label="Close">×</button>
         </div>
-        <iframe class="swkb-iframe" title="SignMaker" data-testid="swkb-iframe"></iframe>
+        <iframe class="swkb-iframe" title="SignMaker" data-testid="swkb-iframe" sandbox="allow-scripts allow-same-origin"></iframe>
       </div>
     `;
     modalEl.addEventListener("mousedown", (e) => {
@@ -111,7 +110,7 @@
       const existing = document.querySelector(`.swkb-preview[data-for="${id}"]`);
       if (existing) return existing;
     }
-    const previewId = id || `swkb-${Math.random().toString(36).slice(2, 10)}`;
+    const previewId = id || `swkb-${crypto.randomUUID()}`;
     input.dataset.swkbId = previewId;
     const preview = document.createElement("span");
     preview.className = "swkb-preview";
@@ -137,7 +136,6 @@
     btn.textContent = "✎";
     btn.title = "Open SignWriting Keyboard";
     btn.setAttribute("aria-label", "Open SignWriting Keyboard");
-    btn.dataset.swkbFor = input.dataset.swkbId || "";
     btn.addEventListener("mousedown", (e) => {
       e.preventDefault();
       openModal(input);
@@ -170,15 +168,15 @@
         if (m.type === "childList") {
           m.addedNodes.forEach((node) => {
             if (node.nodeType !== 1) return;
-            if ((node.matches && node.matches("input")) && isSignWritingInput(node)) {
+            if (node.tagName === "INPUT" && isSignWritingInput(node)) {
               enhance(node);
             } else if (node.querySelectorAll) {
               scan(node);
             }
           });
-        } else if (m.type === "attributes" && m.target.nodeType === 1) {
+        } else if (m.type === "attributes") {
           const t = m.target;
-          if (t.matches && t.matches("input") && isSignWritingInput(t)) {
+          if (t.tagName === "INPUT" && isSignWritingInput(t)) {
             enhance(t);
           }
         }
@@ -188,7 +186,6 @@
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["placeholder", "aria-label", "name", "id", "data-type", "type"],
     });
   }
 

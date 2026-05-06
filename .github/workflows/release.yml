@@ -48,9 +48,7 @@ jobs:
           generate_release_notes: true
 
       - name: Authenticate with Google
-        if: |
-          (startsWith(github.ref, 'refs/tags/v') || inputs.dry_run == false) &&
-          inputs.dry_run != true
+        if: startsWith(github.ref, 'refs/tags/v') && inputs.dry_run != true
         id: gauth
         uses: google-github-actions/auth@v2
         with:
@@ -73,7 +71,7 @@ jobs:
             -T "$ZIP" \
             "https://www.googleapis.com/upload/chromewebstore/v1.1/items/$EXTENSION_ID" \
             | tee /tmp/upload.json
-          status=$(node -p "require('/tmp/upload.json').uploadState")
+          status=$(jq -r '.uploadState // "UNKNOWN"' /tmp/upload.json)
           if [ "$status" != "SUCCESS" ]; then
             echo "::error::upload failed with state $status"
             cat /tmp/upload.json
@@ -93,7 +91,7 @@ jobs:
             -X POST \
             "https://www.googleapis.com/chromewebstore/v1.1/items/$EXTENSION_ID/publish" \
             | tee /tmp/publish.json
-          status=$(node -p "require('/tmp/publish.json').status?.[0] ?? 'UNKNOWN'")
+          status=$(jq -r '.status[0] // "UNKNOWN"' /tmp/publish.json)
           if [ "$status" != "OK" ]; then
             echo "::error::publish returned status $status"
             exit 1

@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "description": "Chrome extension that opens a SignMaker keyboard for inputs marked as SignWriting fields.",
   "scripts": {
     "lint": "eslint .",

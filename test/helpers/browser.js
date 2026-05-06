@@ -71,3 +71,17 @@ export async function interceptSignMaker(page, swu) {
     }
   });
 }
+
+export async function blockSignMaker(page) {
+  await page.setRequestInterception(true);
+  page.on("request", (req) => {
+    if (req.url().startsWith(SIGNMAKER_PREFIX)) req.abort();
+    else req.continue();
+  });
+}
+
+export async function settle(page) {
+  await page.evaluate(() =>
+    new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+  );
+}
