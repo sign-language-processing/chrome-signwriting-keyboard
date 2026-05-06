@@ -1,66 +1,71 @@
 #!/usr/bin/env node
+//
+// Build the extension icons (16, 48, 128) and the 128 store-listing icon by
+// downloading a SignWriting glyph from glyphogram.php and centering it on a
+// padded white square.
+//
+// Output:
+//   icons/icon-16.png
+//   icons/icon-48.png
+//   icons/icon-128.png
+//   icons/icon-store-128.png        (same as icon-128 today; separated so
+//                                    we can swap for a different design later)
+
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import zlib from "node:zlib";
+import sharp from "sharp";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(__dirname, "..", "icons");
 const SIZES = [16, 48, 128];
 
-function crc32(buf) {
-  const table = [];
-  for (let n = 0; n < 256; n++) {
-    let c = n;
-    for (let k = 0; k < 8; k++) {
-      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-    }
-    table[n] = c >>> 0;
-  }
-  let crc = 0xffffffff;
-  for (let i = 0; i < buf.length; i++) {
-    crc = (crc >>> 8) ^ table[(crc ^ buf[i]) & 0xff];
-  }
-  return (crc ^ 0xffffffff) >>> 0;
+const GLYPH_URL =
+  "https://swis.wmflabs.org/glyphogram.php?text=" +
+  "AS10011S10019S2e704S2e748M525x535S2e748483x510S10011501x466S2e704510x500S10019476x475" +
+  "&pad=0&size=3&name=Sign";
+
+const PADDING_RATIO = 0.12;
+
+async function fetchGlyph() {
+  const res = await fetch(GLYPH_URL);
+  if (!res.ok) throw new Error(`glyph fetch failed: ${res.status} ${res.statusText}`);
+  return Buffer.from(await res.arrayBuffer());
 }
 
-function chunk(type, data) {
-  const len = Buffer.alloc(4);
-  len.writeUInt32BE(data.length, 0);
-  const typeBuf = Buffer.from(type, "ascii");
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(Buffer.concat([typeBuf, data])), 0);
-  return Buffer.concat([len, typeBuf, data, crc]);
-}
-
-function solidPng(size, [r, g, b, a]) {
-  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(size, 0);
-  ihdr.writeUInt32BE(size, 4);
-  ihdr[8] = 8;
-  ihdr[9] = 6;
-  const rows = [];
-  for (let y = 0; y < size; y++) {
-    rows.push(0);
-    for (let x = 0; x < size; x++) rows.push(r, g, b, a);
-  }
-  const idat = zlib.deflateSync(Buffer.from(rows));
-  return Buffer.concat([
-    sig,
-    chunk("IHDR", ihdr),
-    chunk("IDAT", idat),
-    chunk("IEND", Buffer.alloc(0)),
-  ]);
+async function makeIcon(glyph, size) {
+  const inner = Math.round(size * (1 - 2 * PADDING_RATIO));
+  const fitted = await sharp(glyph)
+    .resize({ width: inner, height: inner, fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
+    .png()
+    .toBuffer();
+  const left = Math.round((size - inner) / 2);
+  const top = Math.round((size - inner) / 2);
+  return sharp({
+    create: {
+      width: size,
+      height: size,
+      channels: 4,
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+    },
+  })
+    .composite([{ input: fitted, left, top }])
+    .png({ compressionLevel: 9 })
+    .toBuffer();
 }
 
 async function main() {
   await mkdir(OUT, { recursive: true });
+  console.log(`fetching ${GLYPH_URL}`);
+  const glyph = await fetchGlyph();
   for (const size of SIZES) {
-    const buf = solidPng(size, [49, 130, 246, 255]);
+    const buf = await makeIcon(glyph, size);
     await writeFile(join(OUT, `icon-${size}.png`), buf);
+    console.log(`  wrote icons/icon-${size}.png (${buf.length} bytes)`);
   }
-  console.log(`Wrote ${SIZES.length} icons to ${OUT}`);
+  const store = await makeIcon(glyph, 128);
+  await writeFile(join(OUT, "icon-store-128.png"), store);
+  console.log(`  wrote icons/icon-store-128.png`);
 }
 
 main().catch((e) => {
