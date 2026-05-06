@@ -40,10 +40,11 @@ async function main() {
     await page.screenshot({ path: join(OUT, "screenshot-1-fields.png") });
     console.log("wrote screenshot-1-fields.png");
 
-    await page.focus("#by-placeholder");
+    // Open the modal on the prefilled input so SignMaker loads with an actual
+    // sign on its canvas (not an empty yellow grid that looks like a bug).
+    await page.focus("#prefilled");
     await page.waitForSelector(".swkb-modal-backdrop.swkb-open");
-    // Wait for SignMaker to render its UI inside the iframe.
-    await new Promise((r) => setTimeout(r, 4000));
+    await new Promise((r) => setTimeout(r, 6000));
     await page.screenshot({ path: join(OUT, "screenshot-2-modal.png") });
     console.log("wrote screenshot-2-modal.png");
 
