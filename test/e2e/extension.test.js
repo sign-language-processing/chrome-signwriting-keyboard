@@ -8,7 +8,7 @@ import { startStaticServer } from "../helpers/server.js";
 import { launchBrowser, interceptSignMaker, EXTENSION_PATH } from "../helpers/browser.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SCREENSHOT_DIR = resolve(__dirname, "..", "..", "screenshots");
+const SCREENSHOT_DIR = resolve(__dirname, "..", "..", "e2e-output");
 const FIXTURES = resolve(EXTENSION_PATH, "test", "fixtures");
 const EXPECTED_SWU = "𝠀񁳴񁳶񉌍񉌕񁳲񁳸𝠃𝤭𝤩񁳼𝣭𝣤񁳴𝤉𝣤񉌍𝤡𝣺񉌕𝣠𝣺񁳺𝣭𝤑񁳲𝤉𝤑";
 
@@ -83,12 +83,18 @@ test("opens modal when SignWriting input is focused", async () => {
   await page.close();
 });
 
+async function settle(page) {
+  await page.evaluate(() =>
+    new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+  );
+}
+
 test("does not open modal for non-matching inputs", async () => {
   const page = await newPage();
   await gotoTestPage(page);
 
   await page.focus("#plain");
-  await new Promise((r) => setTimeout(r, 250));
+  await settle(page);
   const open = await page.$(".swkb-modal-backdrop.swkb-open");
   assert.equal(open, null);
 
@@ -185,7 +191,7 @@ test("ignores postMessage from foreign origins", async () => {
   await page.evaluate(() => {
     window.postMessage({ signmaker: "save", swu: "WONT_LAND" }, "*");
   });
-  await new Promise((r) => setTimeout(r, 250));
+  await settle(page);
   const open = await page.$(".swkb-modal-backdrop.swkb-open");
   const val = await page.$eval("#by-placeholder", (el) => el.value);
   assert.notEqual(open, null, "modal must stay open");
@@ -207,6 +213,43 @@ test("dynamically added SignWriting input gets enhanced", async () => {
   await page.waitForFunction(
     () => document.querySelector("#dynamic")?.dataset.swkbButton === "1"
   );
+
+  await page.close();
+});
+
+test("input becomes enhanced when an attribute is mutated to SignWriting", async () => {
+  const page = await newPage();
+  await gotoTestPage(page);
+
+  await page.evaluate(() => {
+    const input = document.createElement("input");
+    input.id = "mutated";
+    document.body.appendChild(input);
+  });
+
+  await page.evaluate(() => {
+    document.querySelector("#mutated").setAttribute("data-kind", "SignWriting");
+  });
+
+  await page.waitForFunction(
+    () => document.querySelector("#mutated")?.dataset.swkbButton === "1"
+  );
+
+  await page.close();
+});
+
+test("prefilled input value is forwarded to SignMaker via the swu URL param", async () => {
+  const page = await newPage();
+  await gotoTestPage(page);
+
+  await page.focus("#prefilled");
+  await page.waitForSelector(".swkb-modal-backdrop.swkb-open", { visible: true });
+
+  const iframeSrc = await page.$eval(".swkb-iframe", (el) => el.src);
+  const expectedValue = await page.$eval("#prefilled", (el) => el.value);
+  const url = new URL(iframeSrc);
+  const params = new URLSearchParams(url.hash.replace(/^#\??/, ""));
+  assert.equal(params.get("swu"), expectedValue);
 
   await page.close();
 });
