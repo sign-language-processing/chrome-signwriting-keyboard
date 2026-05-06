@@ -1,0 +1,104 @@
+:root {
+  --swkb-loaded: 1;
+}
+
+.swkb-modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2147483646;
+  align-items: center;
+  justify-content: center;
+}
+
+.swkb-modal-backdrop.swkb-open {
+  display: flex;
+}
+
+.swkb-modal {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: min(1280px, 95vw);
+  height: min(820px, 92vh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #111;
+}
+
+.swkb-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.swkb-modal-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.swkb-close {
+  background: transparent;
+  border: 0;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: #555;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+}
+
+.swkb-close:hover {
+  background: #f3f4f6;
+}
+
+.swkb-iframe {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: #fff;
+  display: block;
+}
+
+.swkb-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+  min-height: 32px;
+}
+
+.swkb-preview:empty {
+  display: none;
+}
+
+.swkb-preview sgnw-sign {
+  color: #000;
+}
+
+.swkb-edit-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  color: #374151;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.swkb-edit-button:hover {
+  background: #f3f4f6;
+}

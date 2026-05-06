@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SignWriting Keyboard Test Page</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 20px;
+      color: #111;
+    }
+    h1 { font-size: 22px; }
+    fieldset {
+      margin: 16px 0;
+      padding: 12px 16px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+    legend { font-weight: 600; }
+    label { display: block; margin: 8px 0; }
+    input, textarea {
+      padding: 6px 8px;
+      font-size: 14px;
+      width: 280px;
+    }
+  </style>
+</head>
+<body>
+  <h1>SignWriting Keyboard Test Page</h1>
+  <p>Inputs below should be recognized by the extension because at least one
+     attribute equals <code>SignWriting</code>.</p>
+
+  <fieldset>
+    <legend>Recognized fields</legend>
+    <label>
+      Placeholder match:
+      <input id="by-placeholder" placeholder="SignWriting">
+    </label>
+    <label>
+      aria-label match:
+      <input id="by-aria" type="text" aria-label="SignWriting">
+    </label>
+    <label>
+      data-type match:
+      <input id="by-data-type" data-type="SignWriting">
+    </label>
+    <label>
+      Textarea (should NOT be enhanced):
+      <textarea id="by-textarea" placeholder="SignWriting" rows="2" cols="40"></textarea>
+    </label>
+    <label>
+      Pre-filled value:
+      <input id="prefilled" placeholder="SignWriting" value="𝠀񁳴񁳶񉌍񉌕񁳲񁳸𝠃𝤭𝤩񁳼𝣭𝣤񁳴𝤉𝣤񉌍𝤡𝣺񉌕𝣠𝣺񁳺𝣭𝤑񁳲𝤉𝤑">
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Non-matching fields</legend>
+    <label>
+      Plain text:
+      <input id="plain" placeholder="Your name">
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Output of `prefilled` field (rendered)</legend>
+    <pre id="prefilled-value" style="white-space: pre-wrap; word-break: break-all;"></pre>
+  </fieldset>
+
+  <script>
+    const prefilled = document.getElementById("prefilled");
+    const out = document.getElementById("prefilled-value");
+    function show() { out.textContent = prefilled.value; }
+    show();
+    prefilled.addEventListener("input", show);
+    prefilled.addEventListener("change", show);
+  </script>
+</body>
+</html>

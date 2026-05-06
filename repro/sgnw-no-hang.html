@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>sgnw-components — no hang (control)</title>
+  <link rel="stylesheet"
+        href="https://unpkg.com/@sutton-signwriting/sgnw-components@1.1.0/dist/sgnw-components/sgnw-components.css">
+  <style>
+    body { font: 14px/1.5 system-ui, sans-serif; max-width: 740px; margin: 24px auto; padding: 0 16px; }
+    #log { background: #fafafa; border: 1px solid #ddd; padding: 8px; border-radius: 6px;
+           white-space: pre-wrap; word-break: break-all; min-height: 60px; }
+    button { font-size: 14px; padding: 6px 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Control: same script, but <code>&lt;sgnw-sign&gt;</code> is added <i>after</i> the script signals it loaded</h1>
+
+  <p>This page does NOT hang. The script loads, dispatches the
+     <code>sgnw</code> event, and only then we insert
+     <code>&lt;sgnw-sign&gt;</code>. Compare against
+     <a href="./sgnw-hang-repro.html"><code>sgnw-hang-repro.html</code></a>,
+     which is identical except the element is in the static markup at parse
+     time.</p>
+
+  <div id="log">log:</div>
+  <p><button id="add">Add &lt;sgnw-sign&gt; now</button></p>
+  <div id="host"></div>
+
+  <script>
+    const log = (msg) => {
+      const el = document.getElementById("log");
+      el.textContent += "\n" + new Date().toISOString().slice(11, 23) + " " + msg;
+    };
+    log("page parsed; window.sgnw = " + window.sgnw);
+    setTimeout(() => log("alive at +500ms"), 500);
+    setTimeout(() => log("alive at +1500ms"), 1500);
+    setTimeout(() => log("alive at +5000ms"), 5000);
+
+    const SWU = "𝠀񁳴񁳶񉌍񉌕񁳲񁳸𝠃𝤭𝤩񁳼𝣭𝣤񁳴𝤉𝣤񉌍𝤡𝣺񉌕𝣠𝣺񁳺𝣭𝤑񁳲𝤉𝤑";
+    let ready = false;
+    window.addEventListener("sgnw", () => {
+      ready = true;
+      log("sgnw event fired; window.sgnw = " + window.sgnw + " — safe to render now");
+    });
+    document.getElementById("add").addEventListener("click", () => {
+      if (!ready) return log("waiting for sgnw event…");
+      const el = document.createElement("sgnw-sign");
+      el.setAttribute("swu", SWU);
+      document.getElementById("host").appendChild(el);
+      log("added <sgnw-sign>");
+    });
+  </script>
+
+  <script type="module"
+          src="https://unpkg.com/@sutton-signwriting/sgnw-components@1.1.0/dist/sgnw-components/sgnw-components.esm.js"></script>
+</body>
+</html>

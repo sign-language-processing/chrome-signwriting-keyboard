@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build the zip but don't upload to the Web Store"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+      - name: Verify tag matches manifest version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          manifest=$(node -p "require('./manifest.json').version")
+          if [ "$tag" != "$manifest" ]; then
+            echo "::error::tag $tag does not match manifest.json version $manifest"
+            exit 1
+          fi
+
+      - run: npm run build
+
+      - name: Upload zip as release asset
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-pkg/*.zip
+          generate_release_notes: true
+
+      - name: Authenticate with Google
+        if: startsWith(github.ref, 'refs/tags/v') && inputs.dry_run != true
+        id: gauth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.CHROME_SERVICE_ACCOUNT_JSON }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/chromewebstore
+
+      - name: Upload to Chrome Web Store
+        if: steps.gauth.outcome == 'success'
+        env:
+          ACCESS_TOKEN: ${{ steps.gauth.outputs.access_token }}
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+        run: |
+          ZIP=$(ls dist-pkg/*.zip | head -1)
+          echo "Uploading $ZIP to extension $EXTENSION_ID"
+          curl -sSf \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "x-goog-api-version: 2" \
+            -X PUT \
+            -T "$ZIP" \
+            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/$EXTENSION_ID" \
+            | tee /tmp/upload.json
+          status=$(jq -r '.uploadState // "UNKNOWN"' /tmp/upload.json)
+          if [ "$status" != "SUCCESS" ]; then
+            echo "::error::upload failed with state $status"
+            cat /tmp/upload.json
+            exit 1
+          fi
+
+      - name: Publish to Chrome Web Store
+        if: steps.gauth.outcome == 'success'
+        env:
+          ACCESS_TOKEN: ${{ steps.gauth.outputs.access_token }}
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+        run: |
+          curl -sSf \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "x-goog-api-version: 2" \
+            -H "Content-Length: 0" \
+            -X POST \
+            "https://www.googleapis.com/chromewebstore/v1.1/items/$EXTENSION_ID/publish" \
+            | tee /tmp/publish.json
+          status=$(jq -r '.status[0] // "UNKNOWN"' /tmp/publish.json)
+          if [ "$status" != "OK" ]; then
+            echo "::error::publish returned status $status"
+            exit 1
+          fi

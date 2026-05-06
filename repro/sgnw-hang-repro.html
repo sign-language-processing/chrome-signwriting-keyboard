@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>sgnw-components &lt;sgnw-sign&gt; hang repro</title>
+  <link rel="stylesheet"
+        href="https://unpkg.com/@sutton-signwriting/sgnw-components@1.1.0/dist/sgnw-components/sgnw-components.css">
+  <style>
+    body { font: 14px/1.5 system-ui, sans-serif; max-width: 740px; margin: 24px auto; padding: 0 16px; }
+    code, pre { background: #f3f4f6; }
+    pre { padding: 8px 12px; border-radius: 6px; }
+    #log { background: #fafafa; border: 1px solid #ddd; padding: 8px; border-radius: 6px;
+           white-space: pre-wrap; word-break: break-all; min-height: 60px; }
+  </style>
+</head>
+<body>
+  <h1>sgnw-components 1.1.0 — page hangs when <code>&lt;sgnw-sign&gt;</code> is in the DOM at upgrade time</h1>
+
+  <p><b>What happens:</b> on Chrome 131 (headless or headed) this page becomes
+     completely unresponsive — <code>page.evaluate(() =&gt; 1 + 1)</code>,
+     <code>page.screenshot()</code>, and DevTools console all hang — within
+     ~1 s of load. The trigger is having any <code>&lt;sgnw-sign&gt;</code>
+     element in the document tree at the moment
+     <code>customElements.define('sgnw-sign', …)</code> runs and the
+     existing element is upgraded.</p>
+
+  <p><b>Workaround we observed:</b> if you load the script first, wait for the
+     <code>sgnw</code> event to fire, and only then create
+     <code>&lt;sgnw-sign&gt;</code> elements, no hang. So the issue is
+     specifically the upgrade path on a pre-existing element.</p>
+
+  <h2>Repro</h2>
+
+  <ol>
+    <li>Serve this file (any static server; relative URLs not needed).</li>
+    <li>Open it in Chrome 131. The page renders the headings and
+        <code>&lt;sgnw-sign&gt;</code> element below, then locks up.</li>
+    <li>Compare against
+        <a href="./sgnw-no-hang.html"><code>sgnw-no-hang.html</code></a> which
+        is identical except <code>&lt;sgnw-sign&gt;</code> is added after the
+        component script signals it has loaded — that page stays responsive.</li>
+  </ol>
+
+  <h2>Static markup that triggers it</h2>
+  <pre>&lt;sgnw-sign swu="𝠀񁳴񁳶񉌍񉌕񁳲񁳸𝠃𝤭𝤩񁳼𝣭𝣤񁳴𝤉𝣤񉌍𝤡𝣺񉌕𝣠𝣺񁳺𝣭𝤑񁳲𝤉𝤑"&gt;&lt;/sgnw-sign&gt;</pre>
+
+  <div id="log">log:</div>
+
+  <h3>The element (page locks shortly after the component script defines this tag)</h3>
+  <sgnw-sign swu="𝠀񁳴񁳶񉌍񉌕񁳲񁳸𝠃𝤭𝤩񁳼𝣭𝣤񁳴𝤉𝣤񉌍𝤡𝣺񉌕𝣠𝣺񁳺𝣭𝤑񁳲𝤉𝤑"></sgnw-sign>
+
+  <script>
+    const log = (msg) => {
+      const el = document.getElementById("log");
+      el.textContent += "\n" + new Date().toISOString().slice(11, 23) + " " + msg;
+    };
+    log("page parsed");
+    log("window.sgnw initial = " + window.sgnw);
+    window.addEventListener("sgnw", () => log("sgnw event fired; window.sgnw = " + window.sgnw));
+    setTimeout(() => log("alive at +500ms"), 500);
+    setTimeout(() => log("alive at +1500ms"), 1500);
+    setTimeout(() => log("alive at +5000ms"), 5000);
+  </script>
+
+  <!-- Loading the components script LAST. Same hang occurs whether this is in <head> or </body>. -->
+  <script type="module"
+          src="https://unpkg.com/@sutton-signwriting/sgnw-components@1.1.0/dist/sgnw-components/sgnw-components.esm.js"></script>
+</body>
+</html>
