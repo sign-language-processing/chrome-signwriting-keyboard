@@ -14,6 +14,12 @@ amit@nagish.com
 
 (Click "Verify" after saving and confirm the link Google sends.)
 
+### Privacy policy URL
+
+```
+https://github.com/sign-language-processing/chrome-signwriting-keyboard/blob/main/PRIVACY.md
+```
+
 ---
 
 ## Store listing tab

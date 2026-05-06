@@ -28,7 +28,7 @@ For a manual test: `npm run serve:test`, then load this directory at `chrome://e
 
 ## Privacy
 
-This extension does not collect, store, or transmit any user data. There is no analytics, no telemetry, no remote logging, no background script, and no third-party SDK. The only outbound request the extension makes is loading the SignMaker page inside the modal iframe, which happens only after the user focuses a SignWriting input — and that request goes directly from the browser to `https://www.sutton-signwriting.io/signmaker/`. The values you type stay on the page you typed them into.
+The extension collects, stores, and transmits nothing. No analytics, no telemetry, no background script, no third-party SDK. The only network request it triggers is the SignMaker iframe load, only after you focus a SignWriting input. Full policy in [PRIVACY.md](./PRIVACY.md).
 
 ## Known limitations
 
