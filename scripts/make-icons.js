@@ -36,7 +36,12 @@ async function fetchGlyph() {
 async function makeIcon(glyph, size) {
   const inner = Math.round(size * (1 - 2 * PADDING_RATIO));
   const fitted = await sharp(glyph)
-    .resize({ width: inner, height: inner, fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
+    .resize({
+      width: inner,
+      height: inner,
+      fit: "contain",
+      background: { r: 255, g: 255, b: 255, alpha: 0 },
+    })
     .png()
     .toBuffer();
   const left = Math.round((size - inner) / 2);

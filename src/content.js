@@ -10,8 +10,6 @@
   let modalEl = null;
   let activeInput = null;
 
-  const SGNW_COMPONENTS_URL = "https://unpkg.com/@sutton-signwriting/sgnw-components@1.1.0/dist/sgnw-components/sgnw-components.esm.js";
-  const RENDER_PREVIEWS = false;
 
   function isTextInput(el) {
     if (!(el instanceof HTMLInputElement)) return false;
@@ -35,15 +33,6 @@
     params.set("grid", "2");
     if (swu) params.set("swu", swu);
     return `${SIGNMAKER_URL}#?${params.toString()}`;
-  }
-
-  function injectSgnwComponents() {
-    if (document.querySelector('script[data-swkb-sgnw="1"]')) return;
-    const script = document.createElement("script");
-    script.type = "module";
-    script.dataset.swkbSgnw = "1";
-    script.src = SGNW_COMPONENTS_URL;
-    (document.head || document.documentElement).appendChild(script);
   }
 
   function ensureModal() {
@@ -134,14 +123,10 @@
   function updatePreview(input) {
     const preview = getOrCreatePreview(input);
     preview.innerHTML = "";
-    const value = input.value || "";
-    if (!value) return;
-    if (!RENDER_PREVIEWS) return;
-    for (const token of value.split(/\s+/).filter(Boolean)) {
-      const sign = document.createElement("sgnw-sign");
-      sign.setAttribute("swu", token);
-      preview.appendChild(sign);
-    }
+    // Inline rendering of <sgnw-sign> previews is disabled until upstream
+    // sgnw-components fixes the page-hang on element upgrade. See
+    // https://github.com/sutton-signwriting/sgnw-components/issues/10
+    if (!input.value) return;
   }
 
   function attachEditButton(input) {
@@ -208,7 +193,6 @@
   }
 
   function init() {
-    if (RENDER_PREVIEWS) injectSgnwComponents();
     scan(document);
     observe();
     window.addEventListener("message", handleMessage);

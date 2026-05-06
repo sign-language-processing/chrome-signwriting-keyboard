@@ -3,3 +3,4 @@ dist/
 dist-pkg/
 screenshots/
 .DS_Store
+# store-assets/ are committed deliberately
