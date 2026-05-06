@@ -63,6 +63,7 @@
   width: 100%;
   border: 0;
   background: #fff;
+  display: block;
 }
 
 .swkb-preview {

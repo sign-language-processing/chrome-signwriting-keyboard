@@ -44,9 +44,38 @@ async function main() {
     // sign on its canvas (not an empty yellow grid that looks like a bug).
     await page.focus("#prefilled");
     await page.waitForSelector(".swkb-modal-backdrop.swkb-open");
-    await new Promise((r) => setTimeout(r, 6000));
+
+    // Wait for the SignMaker frame itself to load (cross-origin iframe, but
+    // we can still address it as a Frame and wait for known UI to render).
+    const deadline = Date.now() + 30000;
+    let signmakerFrame;
+    while (Date.now() < deadline) {
+      signmakerFrame = page.frames().find((f) => f.url().startsWith("https://www.sutton-signwriting.io/signmaker/"));
+      if (signmakerFrame) break;
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    if (!signmakerFrame) throw new Error("signmaker iframe never attached");
+    console.log("found iframe at", signmakerFrame.url());
+
+    // Cross-origin frames still expose evaluate(); wait for SignMaker's main
+    // grid layout and its symbol palette to be rendered.
+    await signmakerFrame.waitForFunction(
+      () => document.querySelectorAll(".cmd, .cmdslim").length > 10,
+      { timeout: 30000 }
+    ).catch((e) => console.log("frame wait failed:", e.message));
+    // Final settle for layout and font paint.
+    await new Promise((r) => setTimeout(r, 2000));
+
     await page.screenshot({ path: join(OUT, "screenshot-2-modal.png") });
     console.log("wrote screenshot-2-modal.png");
+
+    // Also dump the modal element on its own (no backdrop, no host page)
+    // so we have a tight crop showing just the embedded SignMaker keyboard.
+    const modal = await page.$(".swkb-modal");
+    if (modal) {
+      await modal.screenshot({ path: join(OUT, "screenshot-2-modal-clipped.png") });
+      console.log("wrote screenshot-2-modal-clipped.png");
+    }
 
     // For the third screenshot, just paint the saved value into the input
     // directly (the actual postMessage round-trip from SignMaker can't be
