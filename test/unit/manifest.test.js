@@ -11,6 +11,8 @@ test("manifest.json is a valid Manifest V3 with content_scripts", async () => {
   const m = JSON.parse(await readFile(resolve(ROOT, "manifest.json"), "utf8"));
   assert.equal(m.manifest_version, 3);
   assert.ok(m.name && m.version);
+  assert.ok(m.description.length <= 132, `description must be ≤132 chars (got ${m.description.length})`);
+  assert.ok(m.author && m.homepage_url);
   assert.ok(Array.isArray(m.content_scripts) && m.content_scripts.length > 0);
   assert.deepEqual(m.content_scripts[0].matches, ["http://*/*", "https://*/*"]);
   assert.ok(m.content_scripts[0].js.includes("src/content.js"));
