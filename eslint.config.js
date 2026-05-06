@@ -22,12 +22,13 @@ export default [
     },
   },
   {
-    files: ["scripts/**/*.js"],
+    files: ["scripts/**/*.{js,mjs}"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",
       globals: {
         ...globals.node,
+        ...globals.browser,
       },
     },
     rules: {

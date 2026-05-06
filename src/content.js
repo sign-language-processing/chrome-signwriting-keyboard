@@ -136,10 +136,8 @@
     btn.textContent = "✎";
     btn.title = "Open SignWriting Keyboard";
     btn.setAttribute("aria-label", "Open SignWriting Keyboard");
-    btn.addEventListener("mousedown", (e) => {
-      e.preventDefault();
-      openModal(input);
-    });
+    btn.addEventListener("mousedown", (e) => e.preventDefault());
+    btn.addEventListener("click", () => openModal(input));
     const preview = getOrCreatePreview(input);
     btn.dataset.swkbFor = input.dataset.swkbId;
     preview.insertAdjacentElement("beforebegin", btn);

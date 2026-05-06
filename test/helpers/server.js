@@ -1,6 +1,6 @@
 import http from "node:http";
 import { readFile } from "node:fs/promises";
-import { extname, join, normalize, resolve } from "node:path";
+import { extname, isAbsolute, join, normalize, relative, resolve } from "node:path";
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -19,7 +19,8 @@ export function startStaticServer(rootDir, port = 0) {
     let pathname = decodeURIComponent(url.pathname);
     if (pathname === "/") pathname = "/index.html";
     const filePath = normalize(join(root, pathname));
-    if (!filePath.startsWith(root)) {
+    const rel = relative(root, filePath);
+    if (rel.startsWith("..") || isAbsolute(rel)) {
       res.writeHead(403);
       res.end("Forbidden");
       return;

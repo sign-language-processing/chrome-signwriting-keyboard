@@ -32,4 +32,4 @@ The extension collects, stores, and transmits nothing. No analytics, no telemetr
 
 ## Known limitations
 
-Inline rendering of the saved sign next to the input is disabled (`RENDER_PREVIEWS = false` in `src/content.js`). `@sutton-signwriting/sgnw-components@1.1.0` reproducibly hangs the page when an `<sgnw-sign>` element exists in the DOM at the moment the custom element is upgraded — see [sgnw-components#10](https://github.com/sutton-signwriting/sgnw-components/issues/10). The repro is in `repro/`. Re-enable once the upstream fix lands.
+Inline rendering of the saved sign next to the input is disabled — `updatePreview()` in `src/content.js` is a deliberate no-op. `@sutton-signwriting/sgnw-components@1.1.0` reproducibly hangs the page when an `<sgnw-sign>` element exists in the DOM at the moment the custom element is upgraded — see [sgnw-components#10](https://github.com/sutton-signwriting/sgnw-components/issues/10). The repro is in `repro/`. Re-enable once the upstream fix lands.
