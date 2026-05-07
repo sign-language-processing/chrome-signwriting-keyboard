@@ -16,6 +16,28 @@
     return ["text", "search", "url", "tel", "email", "password", ""].includes(type);
   }
 
+  function getReferencedLabelText(el) {
+    const labelledby = el.getAttribute("aria-labelledby");
+    if (labelledby) {
+      const text = labelledby
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((id) => el.ownerDocument.getElementById(id))
+        .filter(Boolean)
+        .map((node) => (node.textContent || "").trim())
+        .join(" ")
+        .trim();
+      if (text) return text;
+    }
+    if (el.id) {
+      try {
+        const label = el.ownerDocument.querySelector(`label[for="${CSS.escape(el.id)}"]`);
+        if (label) return (label.textContent || "").trim();
+      } catch { /* CSS.escape edge cases */ }
+    }
+    return "";
+  }
+
   function isSignWritingInput(el) {
     if (!isTextInput(el)) return false;
     for (const attr of el.attributes) {
@@ -23,6 +45,8 @@
         return true;
       }
     }
+    const labelText = getReferencedLabelText(el).replace(/[\s*]+$/, "").toLowerCase();
+    if (labelText === KEYWORD) return true;
     return false;
   }
 

@@ -12,6 +12,7 @@
     "lint:fix": "eslint . --fix",
     "test": "node --test test/unit/*.test.js",
     "test:e2e": "node --test --test-timeout=120000 test/e2e/*.test.js",
+    "test:smoke": "node --test --test-timeout=180000 test/smoke/*.test.js",
     "test:all": "npm run test && npm run test:e2e",
     "build": "node scripts/build.js",
     "icons": "node scripts/make-icons.js",

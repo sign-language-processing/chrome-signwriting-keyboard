@@ -56,7 +56,7 @@ test("recognizes inputs (not textareas) whose attributes equal SignWriting", asy
   );
   assert.deepEqual(
     enhancedIds.sort(),
-    ["by-aria", "by-data-type", "by-placeholder", "prefilled"].sort()
+    ["by-aria", "by-data-type", "by-label", "by-labelledby", "by-placeholder", "prefilled"].sort()
   );
 
   const textareaEnhanced = await page.$eval("#by-textarea",
