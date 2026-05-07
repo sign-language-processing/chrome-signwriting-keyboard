@@ -4,13 +4,21 @@ Chrome extension that turns any text input tagged as a SignWriting field into on
 
 ## Field detection
 
-An `<input>` is treated as a SignWriting field when **any** of its attribute values, trimmed and case-insensitive, equals `SignWriting`. Examples:
+An `<input>` is treated as a SignWriting field when **any** of the following equals `SignWriting` (trimmed, case-insensitive; a trailing required-marker `*` is ignored):
+
+- one of the input's own attribute values, e.g. `placeholder`, `aria-label`, `data-type`
+- the text of the element(s) referenced by `aria-labelledby`
+- the text of an associated `<label for="…">`
 
 ```html
 <input placeholder="SignWriting">
 <input aria-label="SignWriting">
 <input data-type="SignWriting">
+<label for="sw">SignWriting</label><input id="sw">
+<p id="t">SignWriting *</p><input aria-labelledby="t">
 ```
+
+The last form covers Google Forms questions titled "SignWriting", which expose the title via `aria-labelledby` rather than tagging the input directly.
 
 `<textarea>` is intentionally not supported. Inputs added later are picked up via a `MutationObserver`.
 
@@ -19,9 +27,10 @@ An `<input>` is treated as a SignWriting field when **any** of its attribute val
 ```bash
 npm install
 npm run lint
-npm test          # unit
-npm run test:e2e  # Puppeteer (uses a stubbed SignMaker iframe)
-npm run build     # writes dist-pkg/signwriting-keyboard-<version>.zip
+npm test           # unit
+npm run test:e2e   # Puppeteer (uses a stubbed SignMaker iframe)
+npm run test:smoke # hits live external sites (Google Forms); not run in CI
+npm run build      # writes dist-pkg/signwriting-keyboard-<version>.zip
 ```
 
 For a manual test: `npm run serve:test`, then load this directory at `chrome://extensions` (Developer mode → Load unpacked) and open the printed URL.
