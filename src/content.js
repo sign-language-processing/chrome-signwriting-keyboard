@@ -10,10 +10,14 @@
   let modalEl = null;
   let activeInput = null;
 
-  const FONT_FAMILIES = ["SuttonSignWritingLine", "SuttonSignWritingFill"];
+  const FONT_FAMILIES = ["SuttonSignWritingLine", "SuttonSignWritingFill", "SuttonSignWritingOneD"];
+  const RENDER_FONTS = ["SuttonSignWritingLine", "SuttonSignWritingFill"];
+  const SWU_RE = /[\u{1D800}-\u{1DABF}\u{40001}-\u{4FFFD}]/u;
   let fontsReadyPromise = null;
   let fontsLoaded = false;
   const pendingPreviews = new Set();
+  let overlayEl = null;
+  let overlayTarget = null;
 
   function isTextInput(el) {
     if (!(el instanceof HTMLInputElement)) return false;
@@ -43,16 +47,27 @@
     return "";
   }
 
-  function isSignWritingInput(el) {
-    if (!isTextInput(el)) return false;
+  function hasSignWritingLabel(el) {
     for (const attr of el.attributes) {
       if (typeof attr.value === "string" && attr.value.trim().toLowerCase() === KEYWORD) {
         return true;
       }
     }
     const labelText = getReferencedLabelText(el).replace(/[\s*]+$/, "").toLowerCase();
-    if (labelText === KEYWORD) return true;
-    return false;
+    return labelText === KEYWORD;
+  }
+
+  function isSignWritingInput(el) {
+    if (!isTextInput(el)) return false;
+    return hasSignWritingLabel(el);
+  }
+
+  function isSignWritingDisplay(el) {
+    if (!(el instanceof HTMLElement)) return false;
+    if (el instanceof HTMLInputElement) return false;
+    if (el instanceof HTMLTextAreaElement) return false;
+    if (!hasSignWritingLabel(el)) return false;
+    return SWU_RE.test(el.textContent || "");
   }
 
   function buildSignMakerUrl(swu) {
@@ -162,7 +177,7 @@
     document.head.appendChild(style);
 
     fontsReadyPromise = Promise.all(
-      FONT_FAMILIES.map((f) => document.fonts.load(`30px '${f}'`))
+      RENDER_FONTS.map((f) => document.fonts.load(`30px '${f}'`))
     ).then(() => {
       fontsLoaded = true;
       for (const input of pendingPreviews) renderPreview(input);
@@ -228,11 +243,72 @@
     if (input.value) updatePreview(input);
   }
 
+  function ensureOverlay() {
+    if (overlayEl) return overlayEl;
+    overlayEl = document.createElement("div");
+    overlayEl.className = "swkb-hover-overlay";
+    document.documentElement.appendChild(overlayEl);
+    return overlayEl;
+  }
+
+  function renderOverlaySvg(swu) {
+    try {
+      overlayEl.innerHTML = globalThis.ssw.ttf.swu.signSvg(swu);
+    } catch (err) {
+      console.warn("[swkb] signSvg failed:", err);
+      hideOverlay();
+    }
+  }
+
+  function showOverlay(targetEl) {
+    const swu = (targetEl.textContent || "").trim();
+    if (!swu) return;
+    ensureFonts();
+    const overlay = ensureOverlay();
+    overlayTarget = targetEl;
+    const rect = targetEl.getBoundingClientRect();
+    overlay.style.left = `${rect.left}px`;
+    overlay.style.top = `${rect.bottom + 6}px`;
+    overlay.classList.add("swkb-show");
+
+    if (fontsLoaded) {
+      renderOverlaySvg(swu);
+    } else {
+      overlay.innerHTML = '<span class="swkb-overlay-loading" aria-hidden="true">…</span>';
+      ensureFonts().then(() => {
+        if (overlayTarget === targetEl && overlay.classList.contains("swkb-show")) {
+          renderOverlaySvg(swu);
+        }
+      });
+    }
+  }
+
+  function hideOverlay() {
+    if (!overlayEl) return;
+    overlayEl.classList.remove("swkb-show");
+    overlayTarget = null;
+  }
+
+  function enhanceDisplay(el) {
+    if (enhanced.has(el)) return;
+    enhanced.add(el);
+    el.classList.add("swkb-display");
+    el.dataset.swkbDisplay = "1";
+    el.addEventListener("mouseenter", () => showOverlay(el));
+    el.addEventListener("mouseleave", hideOverlay);
+    el.addEventListener("focus", () => showOverlay(el));
+    el.addEventListener("blur", hideOverlay);
+    ensureFonts();
+  }
+
   function scan(root) {
     const scope = root && root.querySelectorAll ? root : document;
-    const candidates = scope.querySelectorAll("input");
-    candidates.forEach((el) => {
+    scope.querySelectorAll("input").forEach((el) => {
       if (isSignWritingInput(el)) enhance(el);
+    });
+    scope.querySelectorAll("[aria-label],[aria-labelledby]").forEach((el) => {
+      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") return;
+      if (isSignWritingDisplay(el)) enhanceDisplay(el);
     });
   }
 
@@ -250,8 +326,10 @@
           });
         } else if (m.type === "attributes") {
           const t = m.target;
-          if (t.tagName === "INPUT" && isSignWritingInput(t)) {
-            enhance(t);
+          if (t.tagName === "INPUT") {
+            if (isSignWritingInput(t)) enhance(t);
+          } else if (isSignWritingDisplay(t)) {
+            enhanceDisplay(t);
           }
         }
       }

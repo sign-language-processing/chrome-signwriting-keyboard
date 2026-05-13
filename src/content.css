@@ -91,6 +91,38 @@
   line-height: 1;
 }
 
+.swkb-display {
+  font-family: 'SuttonSignWritingOneD', inherit;
+}
+
+.swkb-hover-overlay {
+  position: fixed;
+  display: none;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  pointer-events: none;
+  z-index: 2147483647;
+}
+
+.swkb-hover-overlay.swkb-show {
+  display: block;
+}
+
+.swkb-hover-overlay svg {
+  display: block;
+  max-height: 200px;
+  max-width: 300px;
+}
+
+.swkb-overlay-loading {
+  color: #9ca3af;
+  font-size: 18px;
+  line-height: 1;
+}
+
 .swkb-edit-button {
   display: inline-flex;
   align-items: center;

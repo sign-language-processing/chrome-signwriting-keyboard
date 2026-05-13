@@ -228,6 +228,41 @@ test("input becomes enhanced when an attribute is mutated to SignWriting", async
   await page.close();
 });
 
+test("read-only SWU display element gets 1D font class and a hover overlay", async () => {
+  const page = await newPage();
+  await gotoTestPage(page);
+
+  const enhanced = await page.evaluate(() => ({
+    swu: document.getElementById("display-swu").classList.contains("swkb-display"),
+    noSwu: document.getElementById("display-no-swu").classList.contains("swkb-display"),
+    noLabel: document.getElementById("display-no-label").classList.contains("swkb-display"),
+  }));
+  assert.equal(enhanced.swu, true, "display-swu should be enhanced");
+  assert.equal(enhanced.noSwu, false, "display-no-swu must NOT be enhanced (no SWU content)");
+  assert.equal(enhanced.noLabel, false, "display-no-label must NOT be enhanced (no SignWriting label)");
+
+  await page.hover("#display-swu");
+  await page.waitForFunction(() => {
+    const o = document.querySelector(".swkb-hover-overlay.swkb-show");
+    return !!o && !!o.querySelector("svg");
+  }, { timeout: 15000 });
+
+  const overlayInfo = await page.evaluate(() => {
+    const svg = document.querySelector(".swkb-hover-overlay.swkb-show svg");
+    return svg ? { hasViewBox: svg.hasAttribute("viewBox"), textCount: svg.querySelectorAll("text").length } : null;
+  });
+  assert.ok(overlayInfo, "expected hover overlay with svg");
+  assert.ok(overlayInfo.hasViewBox);
+  assert.ok(overlayInfo.textCount > 0);
+
+  await page.screenshot({ path: join(SCREENSHOT_DIR, "05-display-hover.png"), fullPage: true });
+
+  await page.mouse.move(0, 0);
+  await page.waitForFunction(() => !document.querySelector(".swkb-hover-overlay.swkb-show"));
+
+  await page.close();
+});
+
 test("prefilled input renders an SVG preview once fonts load", async () => {
   const page = await newPage();
   await gotoTestPage(page);

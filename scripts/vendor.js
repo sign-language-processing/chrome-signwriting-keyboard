@@ -12,6 +12,7 @@ const FILES = [
   ["index.min.js", "font-ttf.min.js"],
   ["font/SuttonSignWritingLine.ttf", "fonts/SuttonSignWritingLine.ttf"],
   ["font/SuttonSignWritingFill.ttf", "fonts/SuttonSignWritingFill.ttf"],
+  ["font/SuttonSignWritingOneD.ttf", "fonts/SuttonSignWritingOneD.ttf"],
 ];
 
 await rm(DST, { recursive: true, force: true });
