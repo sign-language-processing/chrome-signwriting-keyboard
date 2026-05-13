@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SignWriting Keyboard",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Type SignWriting in any input tagged as a SignWriting field. Opens SignMaker as an on-screen keyboard.",
   "author": "amit@nagish.com",
   "homepage_url": "https://github.com/sign-language-processing/chrome-signwriting-keyboard",
