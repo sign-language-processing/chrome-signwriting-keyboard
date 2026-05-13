@@ -10,6 +10,11 @@
   let modalEl = null;
   let activeInput = null;
 
+  const FONT_FAMILIES = ["SuttonSignWritingLine", "SuttonSignWritingFill"];
+  let fontsReadyPromise = null;
+  let fontsLoaded = false;
+  const pendingPreviews = new Set();
+
   function isTextInput(el) {
     if (!(el instanceof HTMLInputElement)) return false;
     const type = (el.getAttribute("type") || "text").toLowerCase();
@@ -143,13 +148,60 @@
     return preview;
   }
 
-  function updatePreview(input) {
+  function ensureFonts() {
+    if (fontsReadyPromise) return fontsReadyPromise;
+
+    const style = document.createElement("style");
+    style.id = "swkb-font-face";
+    style.textContent = FONT_FAMILIES
+      .map((family) => {
+        const url = chrome.runtime.getURL(`vendor/fonts/${family}.ttf`);
+        return `@font-face{font-family:'${family}';src:local('${family}'),url('${url}') format('truetype');}`;
+      })
+      .join("\n");
+    document.head.appendChild(style);
+
+    fontsReadyPromise = Promise.all(
+      FONT_FAMILIES.map((f) => document.fonts.load(`30px '${f}'`))
+    ).then(() => {
+      fontsLoaded = true;
+      for (const input of pendingPreviews) renderPreview(input);
+      pendingPreviews.clear();
+    }).catch((err) => {
+      console.warn("[swkb] font load failed:", err);
+    });
+
+    return fontsReadyPromise;
+  }
+
+  function renderPreview(input) {
     const preview = getOrCreatePreview(input);
-    preview.innerHTML = "";
-    // Inline rendering of <sgnw-sign> previews is disabled until upstream
-    // sgnw-components fixes the page-hang on element upgrade. See
-    // https://github.com/sutton-signwriting/sgnw-components/issues/10
-    if (!input.value) return;
+    if (!input.value) {
+      preview.innerHTML = "";
+      return;
+    }
+    try {
+      preview.innerHTML = globalThis.ssw.ttf.swu.signSvg(input.value);
+    } catch (err) {
+      console.warn("[swkb] signSvg failed:", err);
+      preview.innerHTML = "";
+    }
+  }
+
+  function updatePreview(input) {
+    ensureFonts();
+    const preview = getOrCreatePreview(input);
+    if (!input.value) {
+      preview.innerHTML = "";
+      pendingPreviews.delete(input);
+      return;
+    }
+    if (fontsLoaded) {
+      renderPreview(input);
+    } else {
+      preview.innerHTML = '<span class="swkb-preview-loading" aria-hidden="true">…</span>';
+      pendingPreviews.add(input);
+    }
   }
 
   function attachEditButton(input) {

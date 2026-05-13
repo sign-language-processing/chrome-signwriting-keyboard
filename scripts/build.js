@@ -11,7 +11,7 @@ const DIST = join(ROOT, "dist");
 const PKG = join(ROOT, "dist-pkg");
 
 const FILES = ["manifest.json"];
-const DIRS = ["src", "icons"];
+const DIRS = ["src", "icons", "vendor"];
 
 async function copyDir(src, dst) {
   await mkdir(dst, { recursive: true });
