@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SignWriting Keyboard",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Type SignWriting in any input tagged as a SignWriting field. Opens SignMaker as an on-screen keyboard.",
   "author": "amit@nagish.com",
   "homepage_url": "https://github.com/sign-language-processing/chrome-signwriting-keyboard",
@@ -13,11 +13,17 @@
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
-      "js": ["src/content.js"],
+      "js": ["vendor/font-ttf.min.js", "src/content.js"],
       "css": ["src/content.css"],
       "run_at": "document_idle",
       "all_frames": false
     }
   ],
-  "permissions": []
+  "permissions": [],
+  "web_accessible_resources": [
+    {
+      "resources": ["vendor/fonts/*.ttf"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ]
 }

@@ -2,5 +2,6 @@ node_modules/
 dist/
 dist-pkg/
 e2e-output/
+vendor/
 .DS_Store
 # store-assets/ are committed deliberately

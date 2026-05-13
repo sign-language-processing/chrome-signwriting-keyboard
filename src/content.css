@@ -79,8 +79,16 @@
   display: none;
 }
 
-.swkb-preview sgnw-sign {
-  color: #000;
+.swkb-preview svg {
+  height: auto;
+  max-height: 80px;
+  max-width: 240px;
+}
+
+.swkb-preview-loading {
+  color: #9ca3af;
+  font-size: 18px;
+  line-height: 1;
 }
 
 .swkb-edit-button {

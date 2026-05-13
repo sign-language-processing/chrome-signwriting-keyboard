@@ -1,6 +1,6 @@
 {
   "name": "chrome-signwriting-keyboard",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -14,6 +14,10 @@
     "test:e2e": "node --test --test-timeout=120000 test/e2e/*.test.js",
     "test:smoke": "node --test --test-timeout=180000 test/smoke/*.test.js",
     "test:all": "npm run test && npm run test:e2e",
+    "vendor": "node scripts/vendor.js",
+    "prebuild": "npm run vendor",
+    "pretest:e2e": "npm run vendor",
+    "pretest:smoke": "npm run vendor",
     "build": "node scripts/build.js",
     "icons": "node scripts/make-icons.js",
     "serve:test": "node scripts/serve-test-page.js"
@@ -23,5 +27,8 @@
     "globals": "^15.14.0",
     "puppeteer": "^24.42.0",
     "sharp": "^0.34.5"
+  },
+  "dependencies": {
+    "@sutton-signwriting/font-ttf": "^1.6.0"
   }
 }

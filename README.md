@@ -22,10 +22,15 @@ The last form covers Google Forms questions titled "SignWriting", which expose t
 
 `<textarea>` is intentionally not supported. Inputs added later are picked up via a `MutationObserver`.
 
+## Inline preview
+
+Once an input has a SWU value (either saved from SignMaker or pre-filled by the page), the extension renders the sign as inline SVG next to the input. Rendering uses [`@sutton-signwriting/font-ttf`](https://github.com/sutton-signwriting/font-ttf) — the JS API returns SVG directly, so no custom-element upgrade path is involved (the [`sgnw-components` upgrade-time hang](https://github.com/sutton-signwriting/sgnw-components/issues/10) reproduced in `repro/` is avoided entirely). The TTF fonts are bundled with the extension; nothing is fetched over the network for preview rendering.
+
 ## Develop
 
 ```bash
 npm install
+npm run vendor     # copies font-ttf JS + TTFs into vendor/ (auto-run by build/test:e2e)
 npm run lint
 npm test           # unit
 npm run test:e2e   # Puppeteer (uses a stubbed SignMaker iframe)
@@ -33,12 +38,8 @@ npm run test:smoke # hits live external sites (Google Forms); not run in CI
 npm run build      # writes dist-pkg/signwriting-keyboard-<version>.zip
 ```
 
-For a manual test: `npm run serve:test`, then load this directory at `chrome://extensions` (Developer mode → Load unpacked) and open the printed URL.
+For a manual test: `npm run serve:test`, then load this directory at `chrome://extensions` (Developer mode → Load unpacked) and open the printed URL. `npm run vendor` must have run at least once first so `vendor/` exists for the unpacked load.
 
 ## Privacy
 
-The extension collects, stores, and transmits nothing. No analytics, no telemetry, no background script, no third-party SDK. The only network request it triggers is the SignMaker iframe load, only after you focus a SignWriting input. Full policy in [PRIVACY.md](./PRIVACY.md).
-
-## Known limitations
-
-Inline rendering of the saved sign next to the input is disabled — `updatePreview()` in `src/content.js` is a deliberate no-op. `@sutton-signwriting/sgnw-components@1.1.0` reproducibly hangs the page when an `<sgnw-sign>` element exists in the DOM at the moment the custom element is upgraded — see [sgnw-components#10](https://github.com/sutton-signwriting/sgnw-components/issues/10). The repro is in `repro/`. Re-enable once the upstream fix lands.
+The extension collects, stores, and transmits nothing. No analytics, no telemetry, no background script, no third-party SDK. The only network request it triggers is the SignMaker iframe load, only after you focus a SignWriting input. Preview rendering uses fonts bundled in the extension itself — no network. Full policy in [PRIVACY.md](./PRIVACY.md).

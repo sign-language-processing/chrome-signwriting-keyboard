@@ -145,10 +145,6 @@ test("save message updates input value, dispatches events, and closes modal", as
   await page.close();
 });
 
-// TODO: re-enable once sgnw-components rendering hang is resolved.
-// Reproduces in vanilla Chrome 131: rendering any <sgnw-sign> on a page locks
-// the main thread (canvas-based font detection loop in p-79ff7b68.js).
-
 test("cancel message from SignMaker closes the modal without changing value", async () => {
   const page = await newPage();
   await page.setRequestInterception(true);
@@ -229,6 +225,32 @@ test("input becomes enhanced when an attribute is mutated to SignWriting", async
     () => document.querySelector("#mutated")?.dataset.swkbButton === "1"
   );
 
+  await page.close();
+});
+
+test("prefilled input renders an SVG preview once fonts load", async () => {
+  const page = await newPage();
+  await gotoTestPage(page);
+
+  await page.waitForFunction(
+    (sel) => {
+      const preview = document.querySelector(`.swkb-preview[data-for="${sel}"]`);
+      return !!preview && !!preview.querySelector("svg");
+    },
+    { timeout: 15000 },
+    await page.$eval("#prefilled", (el) => el.dataset.swkbId)
+  );
+
+  const svgInfo = await page.evaluate(() => {
+    const id = document.getElementById("prefilled").dataset.swkbId;
+    const svg = document.querySelector(`.swkb-preview[data-for="${id}"] svg`);
+    return svg ? { hasViewBox: svg.hasAttribute("viewBox"), textCount: svg.querySelectorAll("text").length } : null;
+  });
+  assert.ok(svgInfo, "expected an svg in the preview");
+  assert.ok(svgInfo.hasViewBox, "expected svg with viewBox");
+  assert.ok(svgInfo.textCount > 0, "expected svg to contain rendered glyph <text> elements");
+
+  await page.screenshot({ path: join(SCREENSHOT_DIR, "04-preview-rendered.png"), fullPage: true });
   await page.close();
 });
 
